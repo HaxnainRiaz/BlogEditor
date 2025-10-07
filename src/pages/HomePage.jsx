@@ -64,7 +64,7 @@ const HomePage = () => {
                 </div>
                 <div className="cta-section">
                     <h2 className="cta-title">
-                        Ready to Get Started?
+                        Ready to Get Started...
                     </h2>
                     <p className="cta-subtitle">
                         Jump right into creating your first document or learn more about our features.
