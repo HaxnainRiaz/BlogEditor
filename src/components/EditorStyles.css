@@ -1,0 +1,732 @@
+/* Editor Responsive Styles - Matching Website Design */
+:root {
+  /* Colors matching your website */
+  --primary-blue: #3b82f6;
+  --primary-purple: #8b5cf6;
+  --primary-indigo: #6366f1;
+  --bg-dark: #0f172a;
+  --bg-darker: #020617;
+  --text-light: #f8fafc;
+  --text-muted: #cbd5e1;
+  --border-light: rgba(255, 255, 255, 0.1);
+  --border-medium: rgba(255, 255, 255, 0.2);
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+}
+
+/* Editor integrates with global navbar; no special root overrides */
+
+/* Main Editor Container */
+.page-root {
+  background: linear-gradient(135deg, #1e3a8a 0%, #7e22ce 50%, #3730a3 100%) !important;
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: transparent;
+}
+
+/* Advanced Toolbar - Single Row Always */
+.advanced-toolbar {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  min-height: 50px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+} 
+
+.advanced-toolbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.advanced-toolbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.advanced-toolbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.advanced-toolbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Toolbar Sections - Single Row Layout */
+.primary-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+.formatting-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+.layout-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+.secondary-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Toolbar Groups - Compact Single Row */
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 1px 3px;
+  border-right: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.toolbar-group:last-child {
+  border-right: none;
+}
+
+/* Toolbar Buttons - Ultra Compact */
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-light);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 28px;
+  min-width: 28px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.toolbar-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
+}
+
+.toolbar-btn:active {
+  transform: translateY(0);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar-btn-active {
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.toolbar-label {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* Format Buttons - Ultra Compact */
+.format-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 24px;
+  min-width: 24px;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.format-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-medium);
+}
+
+.format-btn-active {
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+/* Font Controls - Compact */
+.font-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.select-input {
+  padding: 3px 5px;
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  font-size: 10px;
+  min-width: 60px;
+  max-width: 80px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.select-input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+.color-input {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.color-input:hover {
+  transform: scale(1.1);
+}
+
+/* Editor Content Wrapper - Fixed Height */
+.editor-content-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  background: transparent;
+  height: calc(100vh - 80px - 50px); /* viewport - navbar(80) - toolbar(50) */
+}
+
+/* Editor Content Area - Always Visible */
+.editor-content-area {
+  flex: 1;
+  overflow-y: auto;
+  background: transparent;
+  padding: 12px;
+}
+
+/* TipTap Editor Styling */
+.tiptap-editor {
+  min-height: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  color: white;
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.6;
+  outline: none;
+}
+
+.tiptap-editor:focus {
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* TipTap Content Styling */
+.tiptap-editor .ProseMirror {
+  outline: none;
+  min-height: 300px;
+  color: white;
+}
+
+.tiptap-editor .ProseMirror h1 {
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tiptap-editor .ProseMirror h2 {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.tiptap-editor .ProseMirror h3 {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-editor .ProseMirror p {
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+/* Page Navigation */
+.page-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.nav-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.page-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.page-input {
+  width: 50px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  text-align: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.page-input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+}
+
+.nav-btn, .action-btn {
+  padding: 6px 8px;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.nav-btn:hover, .action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
+}
+
+.nav-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+/* Status Bar */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--glass-border);
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.status-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ===== RESPONSIVE DESIGN - SINGLE ROW OPTIMIZATION ===== */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+  .advanced-toolbar {
+    padding: 5px 6px;
+    gap: 3px;
+    min-height: 45px;
+  }
+
+  .toolbar-btn {
+    padding: 3px 5px;
+    font-size: 10px;
+    min-height: 26px;
+    min-width: 26px;
+  }
+
+  .format-btn {
+    padding: 3px;
+    min-height: 22px;
+    min-width: 22px;
+    font-size: 9px;
+  }
+
+  .select-input {
+    min-width: 55px;
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+
+  .color-input {
+    width: 22px;
+    height: 22px;
+  }
+
+  .toolbar-label {
+    font-size: 9px;
+  }
+}
+
+/* Mobile (768px and below) */
+@media (max-width: 768px) {
+  .advanced-toolbar {
+    padding: 4px 5px;
+    gap: 2px;
+    min-height: 42px;
+  }
+
+  /* Hide less important elements on mobile but keep single row */
+  .toolbar-group.hide-on-mobile,
+  .font-controls .select-input:nth-child(n+2),
+  .toolbar-btn .toolbar-label {
+    display: none !important;
+  }
+
+  /* Keep icons only for mobile */
+  .toolbar-btn {
+    padding: 3px 4px;
+    font-size: 9px;
+    min-height: 24px;
+    min-width: 24px;
+    gap: 0;
+  }
+
+  .format-btn {
+    padding: 2px;
+    min-height: 20px;
+    min-width: 20px;
+    font-size: 8px;
+  }
+
+  .select-input {
+    min-width: 50px;
+    font-size: 8px;
+    padding: 2px 3px;
+  }
+
+  .color-input {
+    width: 20px;
+    height: 20px;
+  }
+
+  .editor-content-wrapper {
+    height: calc(100vh - 42px);
+  }
+
+  .editor-content-area {
+    padding: 8px;
+  }
+
+  .tiptap-editor {
+    padding: 12px;
+    min-height: 200px;
+  }
+}
+
+/* Small Mobile (480px and below) */
+@media (max-width: 480px) {
+  .advanced-toolbar {
+    padding: 3px 4px;
+    min-height: 38px;
+    gap: 1px;
+  }
+
+  .toolbar-btn {
+    padding: 2px 3px;
+    font-size: 8px;
+    min-height: 22px;
+    min-width: 22px;
+  }
+
+  .format-btn {
+    padding: 1px;
+    min-height: 18px;
+    min-width: 18px;
+    font-size: 7px;
+  }
+
+  /* Hide more elements on very small screens */
+  .formatting-toolbar .format-btn:nth-child(n+6),
+  .layout-toolbar .toolbar-group:nth-child(n+2) {
+    display: none !important;
+  }
+
+  .select-input {
+    min-width: 45px;
+    font-size: 7px;
+    padding: 1px 2px;
+  }
+
+  .color-input {
+    width: 18px;
+    height: 18px;
+  }
+
+  .editor-content-area {
+    padding: 6px;
+  }
+
+  .tiptap-editor {
+    padding: 8px;
+    min-height: 150px;
+  }
+}
+
+/* Extra Small Mobile (360px and below) */
+@media (max-width: 360px) {
+  .advanced-toolbar {
+    padding: 2px 3px;
+    min-height: 36px;
+  }
+
+  .toolbar-btn {
+    padding: 2px;
+    min-height: 20px;
+    min-width: 20px;
+    font-size: 7px;
+  }
+
+  .format-btn {
+    min-height: 16px;
+    min-width: 16px;
+    font-size: 6px;
+  }
+
+  /* Keep only essential functions */
+  .formatting-toolbar .format-btn:nth-child(n+4),
+  .secondary-toolbar .toolbar-group:not(.critical-mobile) {
+    display: none !important;
+  }
+
+  .select-input {
+    min-width: 40px;
+    font-size: 6px;
+  }
+
+  .color-input {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .advanced-toolbar {
+    min-height: 54px;
+    padding: 8px;
+  }
+
+  .toolbar-btn,
+  .format-btn {
+    min-height: 38px;
+    min-width: 38px;
+    font-size: 12px;
+  }
+
+  .toolbar-btn {
+    padding: 8px 10px;
+  }
+
+  .format-btn {
+    padding: 6px 8px;
+  }
+
+  .select-input {
+    min-height: 38px;
+    font-size: 14px;
+  }
+
+  .color-input {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* Rest of your existing CSS for modals, export dialogs, etc. remains the same */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(10px);
+}
+
+.modal-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(30px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 300px;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* ... rest of your modal and dialog styles remain the same ... */
+
+/* Print Styles */
+@media print {
+  .advanced-toolbar,
+  .status-bar,
+  .page-navigation {
+    display: none !important;
+  }
+
+  .editor-content-area {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+}
+
+/* Utility Classes */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Loading States */
+.toolbar-btn.loading,
+.format-btn.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.toolbar-btn.loading::after,
+.format-btn.loading::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 4px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
