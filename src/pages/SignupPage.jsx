@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import FaceEnrollment from '../components/FaceEnrollment';
 
 const SignupPage = () => {
     const [formData, setFormData] = useState({
@@ -10,13 +9,8 @@ const SignupPage = () => {
         email: '',
         password: '',
         confirmPassword: '',
-        agreeTerms: false,
-        enableFaceAuth: true // Default to enabling face auth
-    });
-    
-    const [showFaceEnrollment, setShowFaceEnrollment] = useState(false);
-    const [signupStep, setSignupStep] = useState('form'); // 'form' or 'face-enrollment'
-    
+        agreeTerms: false
+    });  
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -45,7 +39,7 @@ const SignupPage = () => {
             return;
         }
 
-        // Store basic user data first
+        // Store user data
         const userData = {
             fullName: formData.fullName,
             email: formData.email,
@@ -53,53 +47,13 @@ const SignupPage = () => {
         };
         
         localStorage.setItem('userData', JSON.stringify(userData));
-
-        // Move to face enrollment if enabled
-        if (formData.enableFaceAuth) {
-            setSignupStep('face-enrollment');
-        } else {
-            completeSignup();
-        }
-    };
-
-    const completeSignup = () => {
         toast.success('Account created successfully! Redirecting to login...');
         setTimeout(() => navigate('/login'), 2000);
     };
 
-    const handleFaceEnrollmentComplete = (success) => {
-        if (success) {
-            toast.success('Face enrollment completed! Account created successfully.');
-            setTimeout(() => navigate('/login'), 2000);
-        } else {
-            // If face enrollment failed, still create account but without face auth
-            toast.info('Account created without face authentication. You can enable it later.');
-            setTimeout(() => navigate('/login'), 2000);
-        }
-    };
-
-    const handleFaceEnrollmentCancel = () => {
-        // User chose to skip face enrollment
-        completeSignup();
-    };
-
-    const skipFaceEnrollment = () => {
-        setFormData(prev => ({ ...prev, enableFaceAuth: false }));
-        completeSignup();
-    };
-
     return (
         <div className="auth-page">
-            <ToastContainer />
-            
-            {signupStep === 'face-enrollment' && (
-                <FaceEnrollment
-                    email={formData.email}
-                    onComplete={handleFaceEnrollmentComplete}
-                    onCancel={handleFaceEnrollmentCancel}
-                />
-            )}
-            
+            <ToastContainer />          
             <div className="auth-container">
                 <div className="auth-card">
                     <header className="auth-header">
@@ -181,24 +135,6 @@ const SignupPage = () => {
                                 <label className="checkbox-label">
                                     <input
                                         type="checkbox"
-                                        name="enableFaceAuth"
-                                        checked={formData.enableFaceAuth}
-                                        onChange={handleChange}
-                                        className="checkbox-input"
-                                    />
-                                    <span className="checkbox-text">
-                                        Enable Face Recognition Login
-                                    </span>
-                                </label>
-                                <p className="feature-description">
-                                    Secure, password-free login using facial recognition
-                                </p>
-                            </div>
-
-                            <div className="form-options">
-                                <label className="checkbox-label">
-                                    <input
-                                        type="checkbox"
                                         name="agreeTerms"
                                         checked={formData.agreeTerms}
                                         onChange={handleChange}
@@ -220,22 +156,6 @@ const SignupPage = () => {
                             <button type="submit" className="auth-button">
                                 Create Account
                             </button>
-
-                            {formData.enableFaceAuth && (
-                                <div className="face-auth-info">
-                                    <div className="info-box">
-                                        <h4>🔒 Face Authentication</h4>
-                                        <p>After account creation, you'll be guided to enroll your face for secure, password-free logins.</p>
-                                        <button 
-                                            type="button" 
-                                            onClick={skipFaceEnrollment}
-                                            className="skip-face-auth"
-                                        >
-                                            Skip face enrollment
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </form>
 

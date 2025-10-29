@@ -11,6 +11,7 @@ export default function EditorContentArea({
   quickText,
   setQuickText,
   onSourceToggle,
+  onPostToBlog,
   zoomLevel = 100,
 }) {
   // Constants for A4 at 96 DPI
@@ -454,12 +455,30 @@ export default function EditorContentArea({
             Insert Page Break
           </button>
           <button
-            onClick={saveAsHtml}
-            title="Save Merged HTML"
-            style={{ padding: "6px 12px", border: "1px solid #e5e7eb", borderRadius: "4px" }}
-          >
-            Save HTML
-          </button>
+    onClick={onPostToBlog}
+    className="toolbar-button blog-button"
+    title="Post to Blog"
+    style={{ 
+      padding: "6px 12px", 
+      border: "1px solid #e5e7eb", 
+      borderRadius: "4px",
+      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      color: "white",
+      border: "none",
+      cursor: "pointer",
+      transition: "all 0.3s ease"
+    }}
+    onMouseOver={(e) => {
+      e.target.style.transform = "translateY(-2px)";
+      e.target.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
+    }}
+    onMouseOut={(e) => {
+      e.target.style.transform = "translateY(0)";
+      e.target.style.boxShadow = "none";
+    }}
+  >
+    📝 Post to Blog
+  </button>
           <button
             onClick={saveAsText}
             title="Save as Plain Text"

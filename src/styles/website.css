@@ -1267,3 +1267,260 @@ body {
   margin: 0;
   padding: 0;
 }
+
+
+/* src/pages/BlogPage.css */
+.blog-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 100px 20px 50px;
+}
+
+.blog-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.back-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 30px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.blog-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.blog-title {
+  color: white;
+  font-size: 3rem;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.blog-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.2rem;
+}
+
+.no-blogs {
+  text-align: center;
+  color: white;
+  padding: 60px 20px;
+}
+
+.no-blogs h2 {
+  font-size: 2rem;
+  margin-bottom: 15px;
+}
+
+.blogs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.blog-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 25px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.blog-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.blog-card-title {
+  color: white;
+  font-size: 1.4rem;
+  margin-bottom: 15px;
+  line-height: 1.3;
+}
+
+.blog-card-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.blog-card-excerpt {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.blog-card-excerpt p {
+  margin: 0;
+}
+
+.blog-card-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.read-more-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.read-more-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.delete-button-small {
+  background: rgba(255, 0, 0, 0.2);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.delete-button-small:hover {
+  background: rgba(255, 0, 0, 0.3);
+}
+
+/* Full Blog View */
+.blog-full {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 40px;
+  margin-top: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.blog-full-header {
+  border-bottom: 2px solid #eee;
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.blog-full-title {
+  color: #333;
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+  line-height: 1.2;
+}
+
+.blog-meta {
+  display: flex;
+  gap: 20px;
+  color: #666;
+  font-size: 1rem;
+}
+
+.blog-content {
+  color: #333;
+  line-height: 1.8;
+  font-size: 1.1rem;
+}
+
+.blog-content h1, .blog-content h2, .blog-content h3 {
+  color: #2c3e50;
+  margin: 25px 0 15px;
+}
+
+.blog-content p {
+  margin-bottom: 15px;
+}
+
+.blog-content ul, .blog-content ol {
+  margin: 15px 0;
+  padding-left: 20px;
+}
+
+.blog-content li {
+  margin-bottom: 8px;
+}
+
+.blog-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+.delete-button {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.delete-button:hover {
+  background: #c0392b;
+}
+
+@media (max-width: 768px) {
+  .blog-page {
+    padding: 80px 15px 30px;
+  }
+  
+  .blog-title {
+    font-size: 2rem;
+  }
+  
+  .blogs-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .blog-full {
+    padding: 25px;
+  }
+  
+  .blog-full-title {
+    font-size: 2rem;
+  }
+  
+  .blog-meta {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+/* Add to your editor CSS */
+.toolbar-button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 0 5px;
+  transition: background 0.3s ease;
+}
+
+.toolbar-button:hover {
+  background: #2980b9;
+}

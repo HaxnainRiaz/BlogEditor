@@ -9,7 +9,8 @@ import EditorContentArea from './EditorContentArea';
 import AdvancedModals from './AdvancedModals';
 import FileHandlers from './FileHandlers';
 import StatusBar from './StatusBar';
-import Toast from './Toast';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 // import Sidebar from './Sidebar';
 import { useEditorFunctions } from '../hooks/useEditorFunctions'; // Fix path
 import { useFileOperations } from '../hooks/useFileOperations'; // Fix path
@@ -18,6 +19,36 @@ import { useWordCompatibility } from '../hooks/useWordCompatibility'; // Fix pat
 
 
 export default function Editor() {
+
+
+
+// Add this function to your Editor component
+const handlePostToBlog = () => {
+  if (!editor) return;
+  
+  const title = prompt('Enter blog title:') || 'Untitled Blog';
+  if (!title) return;
+
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  const content = editor.getHTML();
+  
+  const newBlog = {
+    id: Date.now().toString(),
+    title: title,
+    content: content,
+    author: currentUser.fullName || 'Anonymous',
+    date: new Date().toISOString()
+  };
+
+  const existingBlogs = JSON.parse(localStorage.getItem('blogs') || '[]');
+  const updatedBlogs = [newBlog, ...existingBlogs];
+  localStorage.setItem('blogs', JSON.stringify(updatedBlogs));
+  
+  // Use react-toastify instead of custom toast
+  toast.success('Blog posted successfully!');
+  };
+
+
   // Refs
   const editorContainerRef = useRef(null);
   const toolbarRef = useRef(null);
@@ -110,40 +141,42 @@ export default function Editor() {
     <div className='editor-container'>
       <div className="page-root word-editor-theme">
         <div ref={editorContainerRef} className="editor-wrapper">
+          <ToastContainer />
           <AdvancedToolbar
-            editor={editor}
-            toolbarRef={toolbarRef}
-            showToast={setToast}
-            onToggleSource={() => setShowSource(!showSource)}
-            onTogglePreview={() => setShowPreview(!showPreview)}
-            onFindOpen={() => setFindOpen(true)}
-            onFullscreenToggle={editorFunctions.toggleFullscreen}
-            onCommentAdd={() => setCommentModal({ open: true, selection: null })}
-            onEquationInsert={() => setEquationModalOpen(true)}
-            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-            onTrackChangesToggle={() => setTrackChanges(!trackChanges)}
-            isFullscreen={isFullscreen}
-            sidebarOpen={sidebarOpen}
-            trackChanges={trackChanges}
-            onFileOpen={() => document.getElementById('file-open-input')?.click()}
-            onImageUpload={() => document.getElementById('file-image-input')?.click()}
-            onVideoUpload={() => document.getElementById('file-video-input')?.click()}
-            onSaveHtml={fileOperations.saveAsHtml}
-            onSaveWord={fileOperations.saveAsWord}
-            onSavePdf={fileOperations.saveAsPdf}
-            fontSize={fontSize}
-            fontFamily={fontFamily}
-            lineHeight={lineHeight}
-            textColor={textColor}
-            highlightColor={highlightColor}
-            zoomLevel={zoomLevel}
-            onFontSizeChange={editorFunctions.setFontSize}
-            onFontFamilyChange={editorFunctions.setFontFamily}
-            onLineHeightChange={editorFunctions.setLineHeight}
-            onTextColorChange={editorFunctions.setTextColor}
-            onHighlightColorChange={editorFunctions.setHighlightColor}
-            onZoomChange={editorFunctions.setZoomLevel}
-          />
+  editor={editor}
+  toolbarRef={toolbarRef}
+  showToast={setToast}
+  onToggleSource={() => setShowSource(!showSource)}
+  onTogglePreview={() => setShowPreview(!showPreview)}
+  onFindOpen={() => setFindOpen(true)}
+  onFullscreenToggle={editorFunctions.toggleFullscreen}
+  onCommentAdd={() => setCommentModal({ open: true, selection: null })}
+  onEquationInsert={() => setEquationModalOpen(true)}
+  onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+  onTrackChangesToggle={() => setTrackChanges(!trackChanges)}
+  onPostToBlog={handlePostToBlog} // Add this line
+  isFullscreen={isFullscreen}
+  sidebarOpen={sidebarOpen}
+  trackChanges={trackChanges}
+  onFileOpen={() => document.getElementById('file-open-input')?.click()}
+  onImageUpload={() => document.getElementById('file-image-input')?.click()}
+  onVideoUpload={() => document.getElementById('file-video-input')?.click()}
+  onSaveHtml={fileOperations.saveAsHtml}
+  onSaveWord={fileOperations.saveAsWord}
+  onSavePdf={fileOperations.saveAsPdf}
+  fontSize={fontSize}
+  fontFamily={fontFamily}
+  lineHeight={lineHeight}
+  textColor={textColor}
+  highlightColor={highlightColor}
+  zoomLevel={zoomLevel}
+  onFontSizeChange={editorFunctions.setFontSize}
+  onFontFamilyChange={editorFunctions.setFontFamily}
+  onLineHeightChange={editorFunctions.setLineHeight}
+  onTextColorChange={editorFunctions.setTextColor}
+  onHighlightColorChange={editorFunctions.setHighlightColor}
+  onZoomChange={editorFunctions.setZoomLevel}
+/>
 
           <div className="editor-content-wrapper">
             {/* {sidebarOpen && (
@@ -166,6 +199,7 @@ export default function Editor() {
               setQuickText={setQuickText}
               onQuickAdd={editorFunctions.handleQuickAdd}
               onSourceToggle={() => setShowSource(!showSource)}
+              onPostToBlog={handlePostToBlog}
               zoomLevel={zoomLevel}
             />
           </div>
@@ -209,8 +243,6 @@ export default function Editor() {
             onEquationInsert={advancedFeatures.insertEquation}
             onEmojiInsert={editorFunctions.insertChar}
           />
-
-          <Toast toast={toast} />
         </div>
       </div>
     </div>

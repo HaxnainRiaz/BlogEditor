@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
 import { FilesetResolver, FaceLandmarker } from "@mediapipe/tasks-vision";
-// we will draw using our own helpers so the mesh is pixel-perfect and mirrored properly
 import {
   FACEMESH_RIGHT_EYE,
   FACEMESH_LEFT_EYE,
@@ -10,13 +9,7 @@ import {
   FACEMESH_LIPS,
 } from "@mediapipe/face_mesh";
 
-// -----------------------------
-// TRIANGULATION (standard 468-point triangulation)
-// This is the common triangulation used with MediaPipe / tfjs facemesh.
-// It's a long list of indices; kept here so triangles will exactly follow detected landmarks.
-// -----------------------------
-// Complete TRIANGULATION array (1404 indices)
-// Each triplet of numbers is a triangle of landmark indices
+// FIXED: Complete triangulation array - ensure it has ALL 1404 indices
 export const TRIANGULATION = [
   127, 34, 139, 11, 0, 37, 232, 231, 120, 72, 37, 39, 128, 121, 47, 232,
   121, 128, 104, 69, 67, 175, 171, 148, 157, 154, 155, 118, 50, 101, 73,
@@ -65,9 +58,8 @@ export default function FaceMeshPage() {
   const faceLandmarkerRef = useRef(null);
   const animationFrameRef = useRef(null);
 
-  // Smoothed landmark positions across frames to reduce jitter
   const smoothedRef = useRef(null);
-  const SMOOTHING_ALPHA = 0.65; // 0..1 (higher = less lag, lower = smoother)
+  const SMOOTHING_ALPHA = 0.65;
 
   useEffect(() => {
     let running = true;
@@ -90,7 +82,6 @@ export default function FaceMeshPage() {
           }
         );
 
-        // start camera
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 640, height: 480 },
           audio: false,
@@ -100,7 +91,6 @@ export default function FaceMeshPage() {
         videoEl.srcObject = stream;
         videoEl.playsInline = true;
 
-        // when metadata loaded, start detection loop
         videoEl.onloadedmetadata = () => {
           videoEl.play().catch(() => {});
           runDetectionLoop();
@@ -110,38 +100,51 @@ export default function FaceMeshPage() {
       }
     };
 
-    // Convert normalized landmarks -> pixel coordinates (array of {x,y,z})
-    const normalizedToPixels = (landmarks, width, height) =>
-      landmarks.map((pt) => ({
-        x: pt.x * width,
-        y: pt.y * height,
-        z: pt.z ?? 0,
+    // FIXED: Better validation for landmark conversion
+    const normalizedToPixels = (landmarks, width, height) => {
+      if (!landmarks || !Array.isArray(landmarks)) return [];
+      return landmarks.map((pt) => ({
+        x: (pt.x || 0) * width,
+        y: (pt.y || 0) * height,
+        z: pt.z || 0,
       }));
+    };
 
-    // Exponential smoothing between previous and current arrays of points
+    // FIXED: Improved smoothing with bounds checking
     const smoothLandmarks = (prev, current, alpha) => {
-      if (!prev) return current.map((p) => ({ ...p })); // clone
+      if (!prev || !current || current.length === 0) {
+        return current ? current.map((p) => ({ ...p })) : [];
+      }
       const out = new Array(current.length);
       for (let i = 0; i < current.length; i++) {
         const pc = current[i];
         const pp = prev[i] || pc;
+        // Ensure we have valid numbers for smoothing
         out[i] = {
-          x: pp.x * (1 - alpha) + pc.x * alpha,
-          y: pp.y * (1 - alpha) + pc.y * alpha,
+          x: (pp.x || 0) * (1 - alpha) + (pc.x || 0) * alpha,
+          y: (pp.y || 0) * (1 - alpha) + (pc.y || 0) * alpha,
           z: (pp.z || 0) * (1 - alpha) + (pc.z || 0) * alpha,
         };
       }
       return out;
     };
 
-    // Draw a filled triangle using three pixel points
+    // FIXED: Better triangle validation
     const drawTriangle = (ctx, p1, p2, p3, fillStyle, strokeStyle, lineWidth) => {
-      if (!p1 || !p2 || !p3) return;
+      // Check if all points exist and have valid coordinates
+      if (!p1 || !p2 || !p3 || 
+          typeof p1.x !== 'number' || typeof p1.y !== 'number' ||
+          typeof p2.x !== 'number' || typeof p2.y !== 'number' ||
+          typeof p3.x !== 'number' || typeof p3.y !== 'number') {
+        return;
+      }
+      
       ctx.beginPath();
       ctx.moveTo(p1.x, p1.y);
       ctx.lineTo(p2.x, p2.y);
       ctx.lineTo(p3.x, p3.y);
       ctx.closePath();
+      
       if (fillStyle) {
         ctx.fillStyle = fillStyle;
         ctx.fill();
@@ -153,7 +156,7 @@ export default function FaceMeshPage() {
       }
     };
 
-    // Draw triangles from triangulation indices - FIXED VERSION
+    // FIXED: Critical fix - validate triangulation indices and landmarks
     const drawTriangulation = (ctx, landmarksPx, triangulation, opts = {}) => {
       const {
         fillBase = "rgba(0,255,136,0.15)",
@@ -161,61 +164,96 @@ export default function FaceMeshPage() {
         strokeWidth = 0.8,
       } = opts;
 
-      // Draw each triangle from the triangulation array
-      for (let i = 0; i < triangulation.length; i += 3) {
-        const a = triangulation[i];
-        const b = triangulation[i + 1];
-        const c = triangulation[i + 2];
+      // Validate inputs before drawing
+      if (!landmarksPx || landmarksPx.length < 468 || !triangulation) {
+        console.warn('Invalid landmarks or triangulation data');
+        return;
+      }
+
+      // Ensure triangulation array has complete triangles (multiple of 3)
+      const triangleCount = Math.floor(triangulation.length / 3);
+      
+      for (let i = 0; i < triangleCount; i++) {
+        const idx = i * 3;
+        const a = triangulation[idx];
+        const b = triangulation[idx + 1];
+        const c = triangulation[idx + 2];
         
-        // Get the actual landmark points
+        // Validate indices are within bounds
+        if (a >= landmarksPx.length || b >= landmarksPx.length || c >= landmarksPx.length) {
+          continue;
+        }
+
         const pA = landmarksPx[a];
         const pB = landmarksPx[b];
         const pC = landmarksPx[c];
         
         if (!pA || !pB || !pC) continue;
 
-        // Use depth for subtle shading variation
+        // Improved depth calculation
         const avgZ = ((pA.z || 0) + (pB.z || 0) + (pC.z || 0)) / 3;
-        const depthFactor = Math.max(0.1, Math.min(1, 1 - (avgZ + 0.3)));
-        const fillAlpha = 0.1 + 0.1 * depthFactor;
-        const fillColor = `rgba(0,255,136,${fillAlpha.toFixed(3)})`;
+        const depthFactor = Math.max(0.05, Math.min(1, 1 - (avgZ + 0.2)));
+        const fillAlpha = 0.08 + 0.12 * depthFactor;
+        const fillColor = `rgba(0,255,136,${fillAlpha})`;
 
         drawTriangle(ctx, pA, pB, pC, fillColor, stroke, strokeWidth);
       }
     };
 
-    // Draw edges (pairs) using pixel landmarks for outlines
+    // FIXED: Improved edge drawing with validation
     const drawEdges = (ctx, landmarksPx, edges, opts = {}) => {
-      if (!landmarksPx || !edges) return;
+      if (!landmarksPx || landmarksPx.length < 468 || !edges) return;
+      
       const { color = "rgba(0,255,136,0.85)", lineWidth = 0.6, alpha = 1 } = opts;
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.strokeStyle = color;
       ctx.lineWidth = lineWidth;
       ctx.beginPath();
+
+      let hasValidPoints = false;
+      
       for (let i = 0; i < edges.length; i++) {
         const edge = edges[i];
         const a = edge[0];
         const b = edge[1];
+        
+        // Validate edge indices
+        if (a >= landmarksPx.length || b >= landmarksPx.length) continue;
+        
         const pa = landmarksPx[a];
         const pb = landmarksPx[b];
-        if (!pa || !pb) continue;
-        ctx.moveTo(pa.x, pa.y);
+        
+        if (!pa || !pb || 
+            typeof pa.x !== 'number' || typeof pa.y !== 'number' ||
+            typeof pb.x !== 'number' || typeof pb.y !== 'number') continue;
+
+        if (!hasValidPoints) {
+          ctx.moveTo(pa.x, pa.y);
+          hasValidPoints = true;
+        }
         ctx.lineTo(pb.x, pb.y);
       }
-      ctx.stroke();
+      
+      if (hasValidPoints) {
+        ctx.stroke();
+      }
       ctx.restore();
     };
 
-    // Draw points
+    // FIXED: Points drawing with better validation
     const drawPoints = (ctx, landmarksPx, opts = {}) => {
+      if (!landmarksPx || landmarksPx.length === 0) return;
+      
       const { color = "#ffffff", radius = 0.7, alpha = 1 } = opts;
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.fillStyle = color;
+      
       for (let i = 0; i < landmarksPx.length; i++) {
         const p = landmarksPx[i];
-        if (!p || Number.isNaN(p.x) || Number.isNaN(p.y)) continue;
+        if (!p || typeof p.x !== 'number' || typeof p.y !== 'number') continue;
+        
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
         ctx.fill();
@@ -223,7 +261,7 @@ export default function FaceMeshPage() {
       ctx.restore();
     };
 
-    // Main detection loop
+    // FIXED: Main detection loop with better error handling
     const runDetectionLoop = async () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -234,97 +272,86 @@ export default function FaceMeshPage() {
       const loop = async () => {
         if (!running) return;
 
-        // Wait until model is ready and video has data
         if (!faceLandmarkerRef.current || video.readyState < 2) {
           animationFrameRef.current = requestAnimationFrame(loop);
           return;
         }
 
-        // sync canvas size to video (important)
         if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
         }
 
-        // get detection result
         let result = null;
         try {
           result = await faceLandmarkerRef.current.detectForVideo(video, performance.now());
         } catch (err) {
-          // detection failure should not break the loop
           console.warn("detectForVideo error:", err);
         }
 
-        // Clear canvas completely
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Mirror transform: translate + scale so both video and mesh use same transform
         ctx.save();
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);
 
-        // Draw mirrored video
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // If we have landmarks, convert -> pixels, smooth, draw
-        if (result?.faceLandmarks?.[0]) {
-          const normalized = result.faceLandmarks[0]; // array of {x,y,z}
+        // FIXED: Better landmark validation
+        if (result?.faceLandmarks?.[0] && result.faceLandmarks[0].length >= 468) {
+          const normalized = result.faceLandmarks[0];
           const landmarksPx = normalizedToPixels(normalized, canvas.width, canvas.height);
 
-          // Smooth across frames
-          const smoothed = smoothLandmarks(smoothedRef.current, landmarksPx, SMOOTHING_ALPHA);
-          smoothedRef.current = smoothed;
+          // Only smooth if we have valid landmarks
+          if (landmarksPx.length >= 468) {
+            const smoothed = smoothLandmarks(smoothedRef.current, landmarksPx, SMOOTHING_ALPHA);
+            smoothedRef.current = smoothed;
 
-          // ---------------------------
-          // DRAW TRIANGULAR MESH using the actual triangulation
-          // ---------------------------
-          drawTriangulation(ctx, smoothed, TRIANGULATION, {
-            fillBase: "rgba(0,255,136,0.15)",
-            stroke: "rgba(0,255,136,0.6)",
-            strokeWidth: 0.8,
-          });
+            // Draw mesh components only if we have valid data
+            drawTriangulation(ctx, smoothed, TRIANGULATION, {
+              fillBase: "rgba(0,255,136,0.15)",
+              stroke: "rgba(0,255,136,0.6)",
+              strokeWidth: 0.8,
+            });
 
-          // Draw facial feature outlines more prominently
-          drawEdges(ctx, smoothed, FACEMESH_FACE_OVAL, {
-            color: "rgba(255,0,102,0.95)",
-            lineWidth: 2.5,
-            alpha: 1,
-          });
-          drawEdges(ctx, smoothed, FACEMESH_LEFT_EYE, {
-            color: "rgba(0,204,255,0.95)",
-            lineWidth: 2.0,
-            alpha: 1,
-          });
-          drawEdges(ctx, smoothed, FACEMESH_RIGHT_EYE, {
-            color: "rgba(0,204,255,0.95)",
-            lineWidth: 2.0,
-            alpha: 1,
-          });
-          drawEdges(ctx, smoothed, FACEMESH_LEFT_EYEBROW, {
-            color: "rgba(255,170,0,0.95)",
-            lineWidth: 2.0,
-            alpha: 1,
-          });
-          drawEdges(ctx, smoothed, FACEMESH_RIGHT_EYEBROW, {
-            color: "rgba(255,170,0,0.95)",
-            lineWidth: 2.0,
-            alpha: 1,
-          });
-          drawEdges(ctx, smoothed, FACEMESH_LIPS, {
-            color: "rgba(255,0,102,0.95)",
-            lineWidth: 2.0,
-            alpha: 1,
-          });
+            drawEdges(ctx, smoothed, FACEMESH_FACE_OVAL, {
+              color: "rgba(255,0,102,0.95)",
+              lineWidth: 2.5,
+              alpha: 1,
+            });
+            drawEdges(ctx, smoothed, FACEMESH_LEFT_EYE, {
+              color: "rgba(0,204,255,0.95)",
+              lineWidth: 2.0,
+              alpha: 1,
+            });
+            drawEdges(ctx, smoothed, FACEMESH_RIGHT_EYE, {
+              color: "rgba(0,204,255,0.95)",
+              lineWidth: 2.0,
+              alpha: 1,
+            });
+            drawEdges(ctx, smoothed, FACEMESH_LEFT_EYEBROW, {
+              color: "rgba(255,170,0,0.95)",
+              lineWidth: 2.0,
+              alpha: 1,
+            });
+            drawEdges(ctx, smoothed, FACEMESH_RIGHT_EYEBROW, {
+              color: "rgba(255,170,0,0.95)",
+              lineWidth: 2.0,
+              alpha: 1,
+            });
+            drawEdges(ctx, smoothed, FACEMESH_LIPS, {
+              color: "rgba(255,0,102,0.95)",
+              lineWidth: 2.0,
+              alpha: 1,
+            });
 
-          // Draw small landmarks dots
-          drawPoints(ctx, smoothed, { color: "#ffffff", radius: 0.8, alpha: 0.8 });
+            drawPoints(ctx, smoothed, { color: "#ffffff", radius: 0.8, alpha: 0.8 });
+          }
         } else {
-          // no face detected: clear smoothed buffer so next detection is fresh but keep video visible
           smoothedRef.current = null;
         }
 
         ctx.restore();
-
         animationFrameRef.current = requestAnimationFrame(loop);
       };
 
@@ -332,17 +359,14 @@ export default function FaceMeshPage() {
     };
 
     initFaceMesh();
-    runDetectionLoop();
 
     return () => {
       running = false;
       cancelAnimationFrame(animationFrameRef.current);
-      // stop camera
       if (videoRef.current?.srcObject) {
         const tracks = videoRef.current.srcObject.getTracks();
         tracks.forEach((t) => t.stop());
       }
-      // dispose model if available
       try {
         if (faceLandmarkerRef.current && typeof faceLandmarkerRef.current.close === "function") {
           faceLandmarkerRef.current.close();
@@ -351,7 +375,7 @@ export default function FaceMeshPage() {
         // ignore
       }
     };
-  }, []); // run once
+  }, []);
 
   return (
     <div style={styles.container}>
@@ -360,7 +384,6 @@ export default function FaceMeshPage() {
         <video ref={videoRef} style={{ display: "none" }} playsInline />
         <canvas ref={canvasRef} style={styles.canvas} />
       </div>
-
       <p style={styles.info}>
         ✅ Triangular mesh adapts to your unique facial structure and symmetry
       </p>

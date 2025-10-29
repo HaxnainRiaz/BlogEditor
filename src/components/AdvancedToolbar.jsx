@@ -60,6 +60,7 @@ const activeEditor = editor || (typeof window !== 'undefined' && window.__multiP
         onSaveHtml={onSaveHtml}
         onSaveWord={onSaveWord}
         onSavePdf={onSavePdf}
+        
       />
       
       {/* Text Formatting */}

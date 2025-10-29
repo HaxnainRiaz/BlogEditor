@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useFaceAuth } from '../contexts/FaceAuthContext';
-import FaceVerification from '../components/FaceVerification';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -11,11 +9,7 @@ const LoginPage = () => {
     password: ''
   });
   
-  const [showFaceVerification, setShowFaceVerification] = useState(false);
-  const [loginMethod, setLoginMethod] = useState('password'); // 'password' or 'face'
-  
   const navigate = useNavigate();
-  const { hasFaceData, isModelLoaded } = useFaceAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -24,7 +18,7 @@ const LoginPage = () => {
     });
   };
 
-  const handlePasswordLogin = (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
     
     const storedUserData = localStorage.getItem('userData');
@@ -48,68 +42,9 @@ const LoginPage = () => {
     }
   };
 
-  const handleFaceLogin = (e) => {
-    e.preventDefault();
-    
-    if (!formData.email) {
-      toast.error('Please enter your email address');
-      return;
-    }
-
-    const storedUserData = localStorage.getItem('userData');
-    if (!storedUserData) {
-      toast.error('No account found. Please sign up first.');
-      return;
-    }
-
-    const userData = JSON.parse(storedUserData);
-    if (formData.email !== userData.email) {
-      toast.error('No face data found for this email. Please use password login.');
-      return;
-    }
-
-    if (!hasFaceData(formData.email)) {
-      toast.error('No face data enrolled for this account. Please use password login.');
-      return;
-    }
-
-    if (!isModelLoaded) {
-      toast.error('Face recognition system is loading. Please wait or use password login.');
-      return;
-    }
-
-    setShowFaceVerification(true);
-  };
-
-  const handleFaceVerificationSuccess = () => {
-    const userData = JSON.parse(localStorage.getItem('userData'));
-    
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('currentUser', JSON.stringify(userData));
-    
-    toast.success('Face verification successful! Redirecting...');
-    setTimeout(() => navigate('/editor'), 1000);
-  };
-
-  const handleUsePasswordInstead = () => {
-    setShowFaceVerification(false);
-    setLoginMethod('password');
-  };
-
-  const canUseFaceLogin = formData.email && hasFaceData(formData.email) && isModelLoaded;
-
   return (
     <div className="auth-page">
       <ToastContainer />
-      
-      {showFaceVerification && (
-        <FaceVerification
-          email={formData.email}
-          onSuccess={handleFaceVerificationSuccess}
-          onCancel={() => setShowFaceVerification(false)}
-          onUsePassword={handleUsePasswordInstead}
-        />
-      )}
       
       <div className="auth-container">
         <div className="auth-card">
@@ -120,7 +55,7 @@ const LoginPage = () => {
             </p>
           </header>
           
-          <form onSubmit={loginMethod === 'password' ? handlePasswordLogin : handleFaceLogin} className="auth-form">
+          <form onSubmit={handleLogin} className="auth-form">
             <div className="form-fields">
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
@@ -138,48 +73,21 @@ const LoginPage = () => {
                 />
               </div>
               
-              {loginMethod === 'password' && (
-                <div className="form-group">
-                  <label htmlFor="password" className="form-label">
-                    Password
-                  </label>
-                  <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    value={formData.password} 
-                    onChange={handleChange} 
-                    required 
-                    placeholder="Enter your password" 
-                    className="form-input" 
-                  />
-                </div>
-              )}
-              
-              <div className="login-method-toggle">
-                <button
-                  type="button"
-                  className={`method-toggle-btn ${loginMethod === 'password' ? 'active' : ''}`}
-                  onClick={() => setLoginMethod('password')}
-                >
-                  🔐 Password
-                </button>
-                <button
-                  type="button"
-                  className={`method-toggle-btn ${loginMethod === 'face' ? 'active' : ''} ${!canUseFaceLogin ? 'disabled' : ''}`}
-                  onClick={() => canUseFaceLogin && setLoginMethod('face')}
-                  disabled={!canUseFaceLogin}
-                >
-                  👤 Face {!canUseFaceLogin && '🔒'}
-                </button>
+              <div className="form-group">
+                <label htmlFor="password" className="form-label">
+                  Password
+                </label>
+                <input 
+                  type="password" 
+                  id="password" 
+                  name="password" 
+                  value={formData.password} 
+                  onChange={handleChange} 
+                  required 
+                  placeholder="Enter your password" 
+                  className="form-input" 
+                />
               </div>
-              
-              {loginMethod === 'face' && !canUseFaceLogin && formData.email && (
-                <div className="face-login-unavailable">
-                  <p>Face login not available for this email.</p>
-                  <p className="hint">You need to enroll your face first during signup.</p>
-                </div>
-              )}
               
               <div className="form-options">
                 <label className="checkbox-label">
@@ -191,12 +99,8 @@ const LoginPage = () => {
                 </Link>
               </div>
               
-              <button 
-                type="submit" 
-                className="auth-button"
-                disabled={loginMethod === 'face' && !canUseFaceLogin}
-              >
-                {loginMethod === 'password' ? 'Sign In with Password' : 'Sign In with Face'}
+              <button type="submit" className="auth-button">
+                Sign In
               </button>
             </div>
           </form>
