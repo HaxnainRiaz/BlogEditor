@@ -31,6 +31,7 @@ import Focus from "@tiptap/extension-focus";
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import HardBreak from "@tiptap/extension-hard-break";
+import RowResizeExtension from "../extensions/RowResizeExtension";
 
 const lowlight = createLowlight();
 lowlight.register("js", js);
@@ -260,6 +261,7 @@ export const editorConfig = {
         class: 'border-collapse border border-gray-300 my-4',
       },
     }),
+    RowResizeExtension,
     TableRow.configure({
       HTMLAttributes: {
         class: 'border border-gray-300',

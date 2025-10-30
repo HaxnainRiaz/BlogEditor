@@ -1,15 +1,16 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Bold, Italic, Underline, Strikethrough,
-  Superscript, Subscript, Highlighter,
+  Highlighter,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  List, ListOrdered, Outdent, Indent,
-  Columns, Square, Minus, TextCursorInput,
+  List, ListOrdered,
+  Square, Minus,
   ArrowLeftToLine, ArrowRightToLine,
-  Grid3X3, Pencil, Eye,
+  Grid3X3, Eye,
   PanelTop, PanelBottom, PanelLeft, PanelRight,
-  SquareStack, Combine, Split, CaseSensitive, CaseLower, CaseUpper,
+  SquareStack, Combine, Split,
   Table, Plus, MinusCircle, Rows, Columns as ColumnsIcon
 } from 'lucide-react';
 
@@ -28,8 +29,14 @@ const FormattingToolbar = ({
 }) => {
   const [showBorderMenu, setShowBorderMenu] = useState(false);
   const [showTableMenu, setShowTableMenu] = useState(false);
+  const [tableMenuPos, setTableMenuPos] = useState({ top: 0, left: 0 });
+  const [borderMenuPos, setBorderMenuPos] = useState({ top: 0, left: 0 });
+  const borderBtnRef = useRef(null);
+  const tableBtnRef = useRef(null);
+  const [hoverRows, setHoverRows] = useState(0);
+  const [hoverCols, setHoverCols] = useState(0);
   const [showGridlines, setShowGridlines] = useState(false);
-  const [showCaseMenu, setShowCaseMenu] = useState(false);
+  // Removed case menu, superscript/subscript, columns, page/section breaks
 
 
   const fonts = [
@@ -92,13 +99,9 @@ const FormattingToolbar = ({
     { label: "Green", value: "#10B981" }
   ];
 
-  // Table grid for visual selection
-  const tableGrid = Array.from({ length: 10 }, (_, i) =>
-    Array.from({ length: 8 }, (_, j) => ({
-      row: i + 1,
-      col: j + 1
-    }))
-  );
+  // Table grid for visual selection (Word-like 10x10)
+  const GRID_ROWS = 10;
+  const GRID_COLS = 10;
 
   const handleFontSizeChange = (e) => {
     const size = e.target.value;
@@ -177,85 +180,7 @@ const FormattingToolbar = ({
     }
   };
 
-  const changeTextCase = (caseType) => {
-    if (!editor) return;
-
-    try {
-      const { state } = editor;
-      const { from, to, empty } = state.selection;
-
-      if (empty) {
-        // No text selected, apply to current paragraph
-        const node = state.selection.$from.parent;
-        const text = node.textContent;
-
-        let transformedText = text;
-        switch (caseType) {
-          case 'sentence':
-            transformedText = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-            break;
-          case 'lowercase':
-            transformedText = text.toLowerCase();
-            break;
-          case 'uppercase':
-            transformedText = text.toUpperCase();
-            break;
-          case 'capitalize':
-            transformedText = text.replace(/\b\w/g, char => char.toUpperCase());
-            break;
-          case 'toggle':
-            transformedText = text.split('').map(char =>
-              char === char.toUpperCase() ? char.toLowerCase() : char.toUpperCase()
-            ).join('');
-            break;
-          default:
-            return;
-        }
-
-        // Replace the paragraph text
-        const tr = state.tr.replaceWith(
-          state.selection.$from.start(),
-          state.selection.$from.end(),
-          state.schema.text(transformedText)
-        );
-        editor.view.dispatch(tr);
-      } else {
-        // Text is selected, apply to selection only
-        const selectedText = state.doc.textBetween(from, to, '');
-
-        let transformedText = selectedText;
-        switch (caseType) {
-          case 'sentence':
-            transformedText = selectedText.charAt(0).toUpperCase() + selectedText.slice(1).toLowerCase();
-            break;
-          case 'lowercase':
-            transformedText = selectedText.toLowerCase();
-            break;
-          case 'uppercase':
-            transformedText = selectedText.toUpperCase();
-            break;
-          case 'capitalize':
-            transformedText = selectedText.replace(/\b\w/g, char => char.toUpperCase());
-            break;
-          case 'toggle':
-            transformedText = selectedText.split('').map(char =>
-              char === char.toUpperCase() ? char.toLowerCase() : char.toUpperCase()
-            ).join('');
-            break;
-          default:
-            return;
-        }
-
-        // Replace the selected text
-        const tr = state.tr.replaceWith(from, to, state.schema.text(transformedText));
-        editor.view.dispatch(tr);
-      }
-
-      setShowCaseMenu(false);
-    } catch (error) {
-      console.error('Error changing text case:', error);
-    }
-  };
+  // Case transform helpers removed
 
   // Border Functions
   const applyBorder = (borderType, style = 'solid', color = '#000000', width = '1px') => {
@@ -838,82 +763,7 @@ const FormattingToolbar = ({
         </button>
       </div>
 
-      {/* Superscript/Subscript */}
-      <div className="font-controls">
-        <button
-          className={`format-btn ${editor?.isActive('textStyle') && /vertical-align:\s*super/.test(editor.getAttributes('textStyle').style || '')
-            ? 'format-btn-active' : ''
-            }`}
-          onClick={toggleSuper}
-          title="Superscript"
-        >
-          <Superscript size={16} />
-        </button>
-        <button
-          className={`format-btn ${editor?.isActive('textStyle') && /vertical-align:\s*sub/.test(editor.getAttributes('textStyle').style || '')
-            ? 'format-btn-active' : ''
-            }`}
-          onClick={toggleSub}
-          title="Subscript"
-        >
-          <Subscript size={16} />
-        </button>
-      </div>
-      <div className="font-controls" style={{ position: 'relative' }}>
-        <button
-          className="format-btn"
-          onClick={() => setShowCaseMenu(!showCaseMenu)}
-          title="Change Text Case"
-        >
-          <CaseSensitive size={16} />
-        </button>
-
-        {showCaseMenu && (
-          <div className="case-menu">
-            <div className="case-menu-header">
-              <span>Change Case</span>
-              <button onClick={() => setShowCaseMenu(false)}>×</button>
-            </div>
-
-            <div className="case-options">
-              <button onClick={() => changeTextCase('sentence')} className="case-option">
-                <span className="case-icon">Aa</span>
-                <div className="case-info">
-                  <strong>Sentence case</strong>
-                </div>
-              </button>
-
-              <button onClick={() => changeTextCase('lowercase')} className="case-option">
-                <CaseLower size={14} />
-                <div className="case-info">
-                  <strong>lowercase</strong>
-                </div>
-              </button>
-
-              <button onClick={() => changeTextCase('uppercase')} className="case-option">
-                <CaseUpper size={14} />
-                <div className="case-info">
-                  <strong>UPPERCASE</strong>
-                </div>
-              </button>
-
-              <button onClick={() => changeTextCase('capitalize')} className="case-option">
-                <span className="case-icon">Aa</span>
-                <div className="case-info">
-                  <strong>Capitalize Each Word</strong>
-                </div>
-              </button>
-
-              <button onClick={() => changeTextCase('toggle')} className="case-option">
-                <span className="case-icon">Aa</span>
-                <div className="case-info">
-                  <strong>tOGGLE CASE</strong>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Removed superscript/subscript and case menu */}
 
       {/* Text Color & Highlight */}
       <div className="font-controls">
@@ -924,21 +774,7 @@ const FormattingToolbar = ({
           className="color-input"
           title="Text Color"
         />
-        <input
-          type="color"
-          value={highlightColor}
-          onChange={handleHighlightColorChange}
-          className="color-input"
-          title="Text Highlight Color"
-        />
-        <button
-          className="format-btn"
-          onClick={clearHighlight}
-          disabled={!hasExtension('highlight')}
-          title="Clear Highlight"
-        >
-          <Highlighter size={16} />
-        </button>
+        <input type="color" value={highlightColor} onChange={handleHighlightColorChange} className="color-input" title="Text Highlight Color" />
       </div>
 
       {/* Alignment */}
@@ -977,7 +813,7 @@ const FormattingToolbar = ({
         </button>
       </div>
 
-      {/* Lists & Indentation */}
+      {/* Lists */}
       <div className="font-controls">
         <button
           className={`format-btn ${editor?.isActive('bulletList') ? 'format-btn-active' : ''}`}
@@ -995,34 +831,34 @@ const FormattingToolbar = ({
         >
           <ListOrdered size={16} />
         </button>
-        <button
-          className="format-btn"
-          onClick={indent}
-          title="Increase Indent"
-        >
-          <Indent size={16} />
-        </button>
-        <button
-          className="format-btn"
-          onClick={outdent}
-          title="Decrease Indent"
-        >
-          <Outdent size={16} />
-        </button>
       </div>
 
       {/* NEW: Borders Dropdown */}
       <div className="font-controls" style={{ position: 'relative' }}>
         <button
+          ref={borderBtnRef}
           className="format-btn"
-          onClick={() => setShowBorderMenu(!showBorderMenu)}
+          onClick={() => {
+            const el = borderBtnRef.current;
+            setShowBorderMenu((prev) => {
+              const next = !prev;
+              if (next && el) {
+                const r = el.getBoundingClientRect();
+                const left = Math.min(window.innerWidth - 260, Math.max(8, r.left));
+                const top = Math.min(window.innerHeight - 240, r.bottom + 6);
+                setBorderMenuPos({ top, left });
+                setShowTableMenu(false);
+              }
+              return next;
+            });
+          }}
           title="Borders"
         >
           <SquareStack size={16} />
         </button>
 
-        {showBorderMenu && (
-          <div className="border-menu">
+        {showBorderMenu && createPortal(
+          <div className="border-menu" style={{ position: 'fixed', top: borderMenuPos.top, left: borderMenuPos.left, zIndex: 10000 }}>
             <div className="border-menu-header">
               <span>Borders</span>
               <button onClick={() => setShowBorderMenu(false)}>×</button>
@@ -1086,58 +922,71 @@ const FormattingToolbar = ({
                 <Eye size={14} />
               </button>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
 
       {/* NEW: Table Dropdown */}
       <div className="font-controls" style={{ position: 'relative' }}>
         <button
+          ref={tableBtnRef}
           className="format-btn"
-          onClick={() => setShowTableMenu(!showTableMenu)}
+          onClick={() => {
+            const el = tableBtnRef.current;
+            setShowTableMenu((prev) => {
+              const next = !prev;
+              if (next && el) {
+                const r = el.getBoundingClientRect();
+                const left = Math.min(window.innerWidth - 260, Math.max(8, r.left));
+                const top = Math.min(window.innerHeight - 320, r.bottom + 6);
+                setTableMenuPos({ top, left });
+                setShowBorderMenu(false);
+              }
+              return next;
+            });
+          }}
           title="Table"
         >
           <Table size={16} />
         </button>
 
-        {showTableMenu && (
-          <div className="table-menu">
+        {showTableMenu && createPortal(
+          <div className="table-menu" style={{ position: 'fixed', top: tableMenuPos.top, left: tableMenuPos.left, zIndex: 10000 }}>
             <div className="table-menu-header">
               <span>Insert Table</span>
               <button onClick={() => setShowTableMenu(false)}>×</button>
             </div>
 
             <div className="table-grid-selector">
-              <div className="table-grid">
-                {tableGrid.map((row, rowIndex) => (
-                  <div key={rowIndex} className="table-grid-row">
-                    {row.map((cell, colIndex) => (
-                      <div
-                        key={colIndex}
-                        className="table-grid-cell"
-                        onMouseEnter={() => {
-                          // Highlight grid up to this cell
-                          document.querySelectorAll('.table-grid-cell').forEach((el, idx) => {
-                            const cellRow = Math.floor(idx / 8);
-                            const cellCol = idx % 8;
-                            el.classList.toggle(
-                              'highlighted',
-                              cellRow <= rowIndex && cellCol <= colIndex
-                            );
-                          });
-                        }}
-                        onClick={() => handleGridSelection(rowIndex + 1, colIndex + 1)}
-                        title={`${rowIndex + 1} × ${colIndex + 1}`}
-                      />
-                    ))}
-                  </div>
-                ))}
+              <div
+                className="table-grid"
+                onMouseLeave={() => { setHoverRows(0); setHoverCols(0); }}
+                role="grid"
+                aria-label="Insert table size"
+              >
+                {Array.from({ length: GRID_ROWS * GRID_COLS }, (_, idx) => {
+                  const rowIndex = Math.floor(idx / GRID_COLS);
+                  const colIndex = idx % GRID_COLS;
+                  const isHighlighted = hoverRows > 0 && hoverCols > 0
+                    ? rowIndex < hoverRows && colIndex < hoverCols
+                    : false;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`table-grid-cell ${isHighlighted ? 'highlighted' : ''}`}
+                      onMouseEnter={() => { setHoverRows(rowIndex + 1); setHoverCols(colIndex + 1); }}
+                      onClick={() => handleGridSelection(rowIndex + 1, colIndex + 1)}
+                      title={`${rowIndex + 1} × ${colIndex + 1}`}
+                      role="gridcell"
+                      aria-label={`${rowIndex + 1} by ${colIndex + 1}`}
+                    />
+                  );
+                })}
               </div>
               <div className="table-grid-size">
-                {Array.from(document.querySelectorAll('.table-grid-cell.highlighted')).length > 0
-                  ? `${document.querySelectorAll('.table-grid-cell.highlighted')[0]?.parentElement?.childElementCount || 1} × ${document.querySelectorAll('.table-grid-row:first-child .table-grid-cell.highlighted').length || 1} Table`
-                  : 'Select table size'
-                }
+                {hoverRows > 0 && hoverCols > 0 ? `${hoverRows} × ${hoverCols} Table` : 'Select table size'}
               </div>
             </div>
 
@@ -1203,88 +1052,12 @@ const FormattingToolbar = ({
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
 
-      {/* Paragraph Spacing */}
-      <div className="font-controls">
-        <select
-          onChange={(e) => setParagraphSpacing('top', e.target.value)}
-          className="select-input"
-          title="Spacing Before"
-        >
-          <option value="">Before</option>
-          {paragraphSpacings.map((spacing) => (
-            <option key={`before-${spacing.value}`} value={spacing.value}>
-              {spacing.label}
-            </option>
-          ))}
-        </select>
-        <select
-          onChange={(e) => setParagraphSpacing('bottom', e.target.value)}
-          className="select-input"
-          title="Spacing After"
-        >
-          <option value="">After</option>
-          {paragraphSpacings.map((spacing) => (
-            <option key={`after-${spacing.value}`} value={spacing.value}>
-              {spacing.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Indentation Options */}
-      <div className="font-controls">
-        <button
-          className="format-btn"
-          onClick={setFirstLineIndent}
-          title="First Line Indent"
-        >
-          <TextCursorInput size={16} />
-        </button>
-        <button
-          className="format-btn"
-          onClick={setHangingIndent}
-          title="Hanging Indent"
-        >
-          <ArrowRightToLine size={16} />
-        </button>
-      </div>
-
-      {/* Columns */}
-      <div className="font-controls">
-        <select
-          onChange={(e) => setColumns(parseInt(e.target.value))}
-          className="select-input"
-          title="Columns"
-        >
-          {columnOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Page & Section Breaks */}
-      <div className="font-controls">
-        <button
-          className="format-btn"
-          onClick={insertPageBreak}
-          title="Insert Page Break"
-        >
-          <Minus size={16} />
-        </button>
-        <button
-          className="format-btn"
-          onClick={insertSectionBreak}
-          title="Insert Section Break"
-        >
-          <Columns size={16} />
-        </button>
-      </div>
+      {/* Removed paragraph spacing, indentation, columns, breaks */}
 
       {/* Text Direction */}
       <div className="font-controls">

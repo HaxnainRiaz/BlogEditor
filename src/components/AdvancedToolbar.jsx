@@ -8,23 +8,8 @@ const AdvancedToolbar = ({
   editor, 
   toolbarRef, 
   showToast,
-  onToggleSource,
-  onTogglePreview,
-  onFindOpen,
   onFullscreenToggle,
-  onCommentAdd,
-  onEquationInsert,
-  onToggleSidebar,
-  onTrackChangesToggle,
   isFullscreen,
-  sidebarOpen,
-  trackChanges,
-  onFileOpen,
-  onImageUpload,
-  onVideoUpload,
-  onSaveHtml,
-  onSaveWord,
-  onSavePdf,
   fontSize,
   fontFamily,
   lineHeight,
@@ -41,26 +26,12 @@ const AdvancedToolbar = ({
 const activeEditor = editor || (typeof window !== 'undefined' && window.__multiPageActiveEditor) || null;
   return (
     <div className="advanced-toolbar">
-      {/* File and Edit Operations */}
+      {/* Core Edit Operations */}
       <PrimaryToolbar
         editor={activeEditor}
         showToast={showToast}
-        onToggleSource={onToggleSource}
-        onTogglePreview={onTogglePreview}
-        onFindOpen={onFindOpen}
         onFullscreenToggle={onFullscreenToggle}
-        onToggleSidebar={onToggleSidebar}
-        onTrackChangesToggle={onTrackChangesToggle}
         isFullscreen={isFullscreen}
-        sidebarOpen={sidebarOpen}
-        trackChanges={trackChanges}
-        onFileOpen={onFileOpen}
-        onImageUpload={onImageUpload}
-        onVideoUpload={onVideoUpload}
-        onSaveHtml={onSaveHtml}
-        onSaveWord={onSaveWord}
-        onSavePdf={onSavePdf}
-        
       />
       
       {/* Text Formatting */}
@@ -79,13 +50,7 @@ const activeEditor = editor || (typeof window !== 'undefined' && window.__multiP
       />
       
       {/* Layout and Insert */}
-      <LayoutToolbar
-        editor={activeEditor}
-        onCommentAdd={onCommentAdd}
-        onEquationInsert={onEquationInsert}
-        onImageUpload={onImageUpload}
-        onVideoUpload={onVideoUpload}
-      />
+      <LayoutToolbar editor={activeEditor} />
       
       {/* View Controls */}
       <SecondaryToolbar

@@ -7,9 +7,8 @@ import { editorConfig } from './editorConfig';
 import AdvancedToolbar from './AdvancedToolbar';
 import EditorContentArea from './EditorContentArea';
 import AdvancedModals from './AdvancedModals';
-import FileHandlers from './FileHandlers';
 import StatusBar from './StatusBar';
-import { toast } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 // import Sidebar from './Sidebar';
 import { useEditorFunctions } from '../hooks/useEditorFunctions'; // Fix path
@@ -46,6 +45,13 @@ const handlePostToBlog = () => {
   
   // Use react-toastify instead of custom toast
   toast.success('Blog posted successfully!');
+  // Clear editor content and reset paginated pages after posting
+  try {
+    editor.commands.clearContent();
+    if (typeof window !== 'undefined' && typeof window.__resetPages === 'function') {
+      window.__resetPages();
+    }
+  } catch (e) {}
   };
 
 
@@ -57,7 +63,7 @@ const handlePostToBlog = () => {
   // Core state management
   const [showSource, setShowSource] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [quickText, setQuickText] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -87,7 +93,7 @@ const handlePostToBlog = () => {
   // Custom hooks for functionality grouping
   const editorFunctions = useEditorFunctions({
     editor,
-    setToast,
+    setToast: setToastMessage,
     setPastePlainNext,
     setIsFullscreen,
     isFullscreen,
@@ -108,7 +114,7 @@ const handlePostToBlog = () => {
 
   const fileOperations = useFileOperations({
     editor,
-    setToast,
+    setToast: setToastMessage,
     currentFile,
     setCurrentFile,
     trackChanges,
@@ -117,7 +123,7 @@ const handlePostToBlog = () => {
 
   const advancedFeatures = useAdvancedFeatures({
     editor,
-    setToast,
+    setToast: setToastMessage,
     comments,
     setComments,
     trackChanges,
@@ -126,7 +132,7 @@ const handlePostToBlog = () => {
 
   const wordCompatibility = useWordCompatibility({
     editor,
-    setToast
+    setToast: setToastMessage
   });
 
   if (!editor) {
@@ -145,7 +151,7 @@ const handlePostToBlog = () => {
           <AdvancedToolbar
   editor={editor}
   toolbarRef={toolbarRef}
-  showToast={setToast}
+  showToast={setToastMessage}
   onToggleSource={() => setShowSource(!showSource)}
   onTogglePreview={() => setShowPreview(!showPreview)}
   onFindOpen={() => setFindOpen(true)}
@@ -215,13 +221,7 @@ const handlePostToBlog = () => {
             onZoomChange={editorFunctions.setZoomLevel}
           />
 
-          <FileHandlers
-            onFileOpen={fileOperations.openFile}
-            onImageUpload={fileOperations.uploadImage}
-            onVideoUpload={fileOperations.uploadVideo}
-            onFileAttach={fileOperations.attachFile}
-            onWordImport={wordCompatibility.importWordDocument}
-          />
+          {/* FileHandlers removed */}
 
           <AdvancedModals
             findOpen={findOpen}

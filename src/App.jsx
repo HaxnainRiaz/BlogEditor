@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
@@ -27,6 +27,7 @@ const PublicRoute = ({ children }) => {
 function App() {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
@@ -39,33 +40,40 @@ function App() {
       <nav className="nav-fixed">
         <div className="nav-container">
           <div className="nav-glass">
-            <Link to="/" className="nav-link">Home</Link>
-            <Link to="/about" className="nav-link">About</Link>
-                  <Link to="/blog" className="nav-link">Blog</Link> {/* Add this line */}
-
-            <Link to="/contact" className="nav-link">Contact</Link>
-            
-            {isLoggedIn ? (
-              <>
-                <Link to="/editor" className="nav-link">Editor</Link>
-                <div className="nav-user-section">
-                  <span className="nav-welcome">
-                    Welcome, {currentUser.fullName || 'User'}!
-                  </span>
-                  <button 
-                    onClick={handleLogout}
-                    className="nav-logout-btn"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="nav-link">Login</Link>
-                <Link to="/signup" className="nav-link">Sign Up</Link>
-              </>
-            )}
+            <button
+              className="nav-toggle"
+              aria-label="Toggle navigation"
+              onClick={() => setMobileOpen(v => !v)}
+            >
+              ☰
+            </button>
+            <div className={`nav-links ${mobileOpen ? 'is-open' : ''}`}>
+              <Link to="/" className="nav-link" onClick={() => setMobileOpen(false)}>Home</Link>
+              <Link to="/about" className="nav-link" onClick={() => setMobileOpen(false)}>About</Link>
+              <Link to="/blog" className="nav-link" onClick={() => setMobileOpen(false)}>Blog</Link>
+              <Link to="/contact" className="nav-link" onClick={() => setMobileOpen(false)}>Contact</Link>
+              {isLoggedIn ? (
+                <>
+                  <Link to="/editor" className="nav-link" onClick={() => setMobileOpen(false)}>Editor</Link>
+                  <div className="nav-user-section">
+                    <span className="nav-welcome">
+                      Welcome, {currentUser.fullName || 'User'}!
+                    </span>
+                    <button 
+                      onClick={() => { setMobileOpen(false); handleLogout(); }}
+                      className="nav-logout-btn"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="nav-link" onClick={() => setMobileOpen(false)}>Login</Link>
+                  <Link to="/signup" className="nav-link" onClick={() => setMobileOpen(false)}>Sign Up</Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </nav>

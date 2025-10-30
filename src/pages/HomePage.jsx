@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import ClientPage from './ClientPage'
 
 const HomePage = () => {
     return (
@@ -119,7 +118,6 @@ const HomePage = () => {
                     </p>
                 </div>
             </div>
-            <ClientPage/>
         </div>
     );
 };

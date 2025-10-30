@@ -32,6 +32,45 @@ export default function EditorContentArea({
   const pagesRef = useRef([]);
   const [, setVersion] = useState(0);
   const [activePage, setActivePage] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  // Observe container width to compute a responsive scale for small screens
+  useEffect(() => {
+    const el = contentRef?.current;
+    if (!el) return;
+
+    const updateWidth = () => {
+      try {
+        const rect = el.getBoundingClientRect();
+        setContainerWidth(Math.max(0, Math.floor(rect.width)));
+      } catch (e) {}
+    };
+
+    updateWidth();
+    let ro;
+    try {
+      ro = new ResizeObserver(updateWidth);
+      ro.observe(el);
+    } catch (e) {
+      window.addEventListener('resize', updateWidth);
+    }
+
+    return () => {
+      try { ro && ro.disconnect(); } catch (e) {}
+      window.removeEventListener('resize', updateWidth);
+    };
+  }, [contentRef]);
+
+  // Compute effective scale: fit-to-width on narrow screens, otherwise use zoomLevel
+  const getEffectiveScale = () => {
+    if (!containerWidth || containerWidth <= 0) return zoomLevel / 100;
+    const paddingAllowance = 24; // account for paddings/margins/scrollbar
+    const fit = (containerWidth - paddingAllowance) / PAGE_WIDTH_PX;
+    if (fit < 1) {
+      return Math.min(zoomLevel / 100, Math.max(0.25, fit));
+    }
+    return zoomLevel / 100;
+  };
 
   // Set global editor reference and sync content
   useEffect(() => {
@@ -150,8 +189,15 @@ export default function EditorContentArea({
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.__getMergedPagesHTML = getMergedHTML;
+      window.__resetPages = () => {
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        pagesRef.current = [];
+        addPage(-1, "<p></p>");
+        setActivePage(0);
+        setVersion((v) => v + 1);
+      };
     }
-  }, [getMergedHTML]);
+  }, [getMergedHTML, addPage]);
 
   // Sanitize HTML to remove unwanted backgrounds and zero-widths
   const sanitizeHtml = useCallback((html) => {
@@ -273,51 +319,71 @@ export default function EditorContentArea({
         <div
           key={p.id}
           style={{
-            width: `${PAGE_WIDTH_PX}px`,
-            height: `${PAGE_HEIGHT_PX}px`,
+            // Layout box dimension equals scaled size to avoid overflow/cropping
+            width: `${Math.round(PAGE_WIDTH_PX * getEffectiveScale())}px`,
+            height: `${Math.round(PAGE_HEIGHT_PX * getEffectiveScale())}px`,
             margin: "20px auto",
-            paddingTop: `${MARGIN_TOP_PX}px`,
-            paddingRight: `${MARGIN_RIGHT_PX}px`,
-            paddingBottom: `${MARGIN_BOTTOM_PX}px`,
-            paddingLeft: `${MARGIN_LEFT_PX}px`,
-            background: "#fff",
-            boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
-            borderRadius: 8,
-            boxSizing: "border-box",
             position: "relative",
-            overflow: "hidden",
-            transform: `scale(${zoomLevel / 100})`,
-            transformOrigin: "top left",
-            transition: "box-shadow .15s",
           }}
           onClick={() => handlePageChange(idx)}
         >
+          {/* Actual page content at native size, scaled down to fit */}
           <div
-            ref={(el) => {
-              if (p) p.wrapperRef.current = el;
-            }}
             style={{
-              width: "100%",
-              height: `${CONTENT_MAX_HEIGHT}px`,
+              width: `${PAGE_WIDTH_PX}px`,
+              height: `${PAGE_HEIGHT_PX}px`,
+              paddingTop: `${MARGIN_TOP_PX}px`,
+              paddingRight: `${MARGIN_RIGHT_PX}px`,
+              paddingBottom: `${MARGIN_BOTTOM_PX}px`,
+              paddingLeft: `${MARGIN_LEFT_PX}px`,
+              background: "#fff",
+              boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+              borderRadius: 8,
+              boxSizing: "border-box",
               overflow: "hidden",
+              transform: `scale(${getEffectiveScale()})`,
+              transformOrigin: "top left",
+              transition: "box-shadow .15s",
             }}
-            className="page-editable-wrapper"
           >
-            {/* Only render EditorContent for the active page to improve performance */}
-            {isActive && editor && (
-              <EditorContent editor={editor} />
-            )}
-            {!isActive && (
-              <div
-                className="page-preview"
-                dangerouslySetInnerHTML={{ __html: p.content }}
-                style={{
-                  fontFamily: "'Times New Roman', serif",
-                  fontSize: "12pt",
-                  lineHeight: "1.15"
-                }}
-              />
-            )}
+            <div
+              ref={(el) => {
+                if (p) p.wrapperRef.current = el;
+              }}
+              style={{
+                width: "100%",
+                height: `${CONTENT_MAX_HEIGHT}px`,
+                overflow: "hidden",
+              }}
+              className="page-editable-wrapper"
+            >
+              {/* Only render EditorContent for the active page to improve performance */}
+              {isActive && editor && (
+                (() => {
+                  const scale = getEffectiveScale();
+                  const textScale = scale < 1 ? (1 / scale) : 1;
+                  return (
+                    <div
+                      className="tiptap-editor"
+                      style={{ fontSize: scale < 1 ? `${Math.round(12 * textScale)}pt` : undefined }}
+                    >
+                      <EditorContent editor={editor} />
+                    </div>
+                  );
+                })()
+              )}
+              {!isActive && (
+                <div
+                  className="page-preview"
+                  dangerouslySetInnerHTML={{ __html: p.content }}
+                  style={{
+                    fontFamily: "'Times New Roman', serif",
+                    fontSize: "12pt",
+                    lineHeight: "1.15"
+                  }}
+                />
+              )}
+            </div>
           </div>
 
           {/* Page number */}
@@ -372,7 +438,7 @@ export default function EditorContentArea({
   };
 
   return (
-    <div style={{ width: "100%", overflowY: "auto" }} ref={contentRef}>
+    <div style={{ width: "100%", overflowY: "auto", overflowX: "hidden" }} ref={contentRef}>
       <style>
         {`
           /* Remove borders/outlines from TipTap editable area */
@@ -399,61 +465,7 @@ export default function EditorContentArea({
 
       {/* Page Navigation */}
       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px" }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button
-            onClick={() => handlePageChange(Math.max(0, activePage - 1))}
-            title="Prev page"
-            style={{ padding: "6px", border: "1px solid #e5e7eb", borderRadius: "4px" }}
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <input
-              type="number"
-              value={activePage + 1}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                if (!isNaN(val) && val >= 1 && val <= pagesRef.current.length) {
-                  handlePageChange(val - 1);
-                }
-              }}
-              style={{ width: 64, padding: "4px 8px", borderRadius: 6, border: "1px solid #e5e7eb" }}
-            />
-            <span>of {pagesRef.current.length}</span>
-          </div>
-
-          <button
-            onClick={() => handlePageChange(Math.min(pagesRef.current.length - 1, activePage + 1))}
-            title="Next page"
-            style={{ padding: "6px", border: "1px solid #e5e7eb", borderRadius: "4px" }}
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            onClick={() => setVersion((v) => v + 1)}
-            title="Refresh Pages"
-            style={{ padding: "6px 12px", border: "1px solid #e5e7eb", borderRadius: "4px" }}
-          >
-            Refresh
-          </button>
-          <button
-            onClick={() => setVersion((v) => v + 1)}
-            title="Page Setup"
-            style={{ padding: "6px", border: "1px solid #e5e7eb", borderRadius: "4px" }}
-          >
-            <Settings size={16} />
-          </button>
-          <button
-            onClick={insertPageBreak}
-            title="Insert Page Break"
-            style={{ padding: "6px 12px", border: "1px solid #e5e7eb", borderRadius: "4px" }}
-          >
-            Insert Page Break
-          </button>
+        <div style={{ display: "flex", gap: 8 }}>          
           <button
     onClick={onPostToBlog}
     className="toolbar-button blog-button"
@@ -479,13 +491,7 @@ export default function EditorContentArea({
   >
     📝 Post to Blog
   </button>
-          <button
-            onClick={saveAsText}
-            title="Save as Plain Text"
-            style={{ padding: "6px 12px", border: "1px solid #e5e7eb", borderRadius: "4px" }}
-          >
-            Save Text
-          </button>
+          {/* Removed non-blog saving options */}
         </div>
       </div>
 
