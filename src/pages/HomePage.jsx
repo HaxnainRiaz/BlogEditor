@@ -13,7 +13,7 @@ const HomePage = () => {
                         </span>
                     </h1>
                     <p className="home-subtitle">
-                        Create, edit, and manage your documents with ease using
+                        Create, edit, and manage your documents with ease using our powerful, intuitive editor
                     </p>
                 </header>
                 <div className="features-grid">
