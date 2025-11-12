@@ -12,6 +12,7 @@ export default function EditorContentArea({
   setQuickText,
   onSourceToggle,
   onPostToBlog,
+  isPosting = false,
   zoomLevel = 100,
 }) {
   // Constants for A4 at 96 DPI
@@ -467,30 +468,33 @@ export default function EditorContentArea({
       <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px" }}>
         <div style={{ display: "flex", gap: 8 }}>          
           <button
-    onClick={onPostToBlog}
-    className="toolbar-button blog-button"
-    title="Post to Blog"
-    style={{ 
-      padding: "6px 12px", 
-      border: "1px solid #e5e7eb", 
-      borderRadius: "4px",
-      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      color: "white",
-      border: "none",
-      cursor: "pointer",
-      transition: "all 0.3s ease"
-    }}
-    onMouseOver={(e) => {
-      e.target.style.transform = "translateY(-2px)";
-      e.target.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
-    }}
-    onMouseOut={(e) => {
-      e.target.style.transform = "translateY(0)";
-      e.target.style.boxShadow = "none";
-    }}
-  >
-    📝 Post to Blog
-  </button>
+            onClick={onPostToBlog}
+            className="toolbar-button blog-button"
+            title="Post to Blog"
+            disabled={isPosting}
+            style={{
+              padding: "6px 12px",
+              border: "1px solid #e5e7eb",
+              borderRadius: "4px",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              border: "none",
+              cursor: isPosting ? "not-allowed" : "pointer",
+              opacity: isPosting ? 0.7 : 1,
+              transition: "all 0.3s ease",
+            }}
+            onMouseOver={(e) => {
+              if (isPosting) return;
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
+            }}
+            onMouseOut={(e) => {
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "none";
+            }}
+          >
+            {isPosting ? 'Posting…' : '📝 Post to Blog'}
+          </button>
           {/* Removed non-blog saving options */}
         </div>
       </div>

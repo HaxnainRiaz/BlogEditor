@@ -19,42 +19,6 @@ import { useWordCompatibility } from '../hooks/useWordCompatibility'; // Fix pat
 
 export default function Editor() {
 
-
-
-// Add this function to your Editor component
-const handlePostToBlog = () => {
-  if (!editor) return;
-  
-  const title = prompt('Enter blog title:') || 'Untitled Blog';
-  if (!title) return;
-
-  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-  const content = editor.getHTML();
-  
-  const newBlog = {
-    id: Date.now().toString(),
-    title: title,
-    content: content,
-    author: currentUser.fullName || 'Anonymous',
-    date: new Date().toISOString()
-  };
-
-  const existingBlogs = JSON.parse(localStorage.getItem('blogs') || '[]');
-  const updatedBlogs = [newBlog, ...existingBlogs];
-  localStorage.setItem('blogs', JSON.stringify(updatedBlogs));
-  
-  // Use react-toastify instead of custom toast
-  toast.success('Blog posted successfully!');
-  // Clear editor content and reset paginated pages after posting
-  try {
-    editor.commands.clearContent();
-    if (typeof window !== 'undefined' && typeof window.__resetPages === 'function') {
-      window.__resetPages();
-    }
-  } catch (e) {}
-  };
-
-
   // Refs
   const editorContainerRef = useRef(null);
   const toolbarRef = useRef(null);
@@ -68,6 +32,7 @@ const handlePostToBlog = () => {
   const [quickText, setQuickText] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentFile, setCurrentFile] = useState(null);
+  const [isPosting, setIsPosting] = useState(false);
 
   // Advanced state management
   const [findOpen, setFindOpen] = useState(false);
@@ -89,6 +54,61 @@ const handlePostToBlog = () => {
 
   // Initialize editor
   const editor = useEditor(editorConfig);
+
+  const handlePostToBlog = async () => {
+    if (!editor || isPosting) return;
+
+    const titlePrompt = prompt('Enter blog title:');
+    if (titlePrompt === null) return;
+
+    const title = titlePrompt.trim();
+    if (!title) {
+      toast.error('Blog title cannot be empty.');
+      return;
+    }
+
+    const content = editor.getHTML().trim();
+    if (!content || content === '<p></p>') {
+      toast.error('Cannot publish an empty blog post.');
+      return;
+    }
+
+    setIsPosting(true);
+    try {
+      const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:4025';
+      const res = await fetch(`${apiBase}/api/blogs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ title, content }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to publish blog.');
+      }
+
+      toast.success('Blog posted successfully!');
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('blog:created', { detail: data.blog }));
+      }
+
+      try {
+        editor.commands.clearContent();
+        if (typeof window !== 'undefined' && typeof window.__resetPages === 'function') {
+          window.__resetPages();
+        }
+      } catch (error) {
+        console.warn('Failed to reset editor state:', error);
+      }
+    } catch (error) {
+      console.error('Error posting blog:', error);
+      toast.error(error.message);
+    } finally {
+      setIsPosting(false);
+    }
+  };
 
   // Custom hooks for functionality grouping
   const editorFunctions = useEditorFunctions({
@@ -149,40 +169,40 @@ const handlePostToBlog = () => {
         <div ref={editorContainerRef} className="editor-wrapper">
           <ToastContainer />
           <AdvancedToolbar
-  editor={editor}
-  toolbarRef={toolbarRef}
-  showToast={setToastMessage}
-  onToggleSource={() => setShowSource(!showSource)}
-  onTogglePreview={() => setShowPreview(!showPreview)}
-  onFindOpen={() => setFindOpen(true)}
-  onFullscreenToggle={editorFunctions.toggleFullscreen}
-  onCommentAdd={() => setCommentModal({ open: true, selection: null })}
-  onEquationInsert={() => setEquationModalOpen(true)}
-  onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-  onTrackChangesToggle={() => setTrackChanges(!trackChanges)}
-  onPostToBlog={handlePostToBlog} // Add this line
-  isFullscreen={isFullscreen}
-  sidebarOpen={sidebarOpen}
-  trackChanges={trackChanges}
-  onFileOpen={() => document.getElementById('file-open-input')?.click()}
-  onImageUpload={() => document.getElementById('file-image-input')?.click()}
-  onVideoUpload={() => document.getElementById('file-video-input')?.click()}
-  onSaveHtml={fileOperations.saveAsHtml}
-  onSaveWord={fileOperations.saveAsWord}
-  onSavePdf={fileOperations.saveAsPdf}
-  fontSize={fontSize}
-  fontFamily={fontFamily}
-  lineHeight={lineHeight}
-  textColor={textColor}
-  highlightColor={highlightColor}
-  zoomLevel={zoomLevel}
-  onFontSizeChange={editorFunctions.setFontSize}
-  onFontFamilyChange={editorFunctions.setFontFamily}
-  onLineHeightChange={editorFunctions.setLineHeight}
-  onTextColorChange={editorFunctions.setTextColor}
-  onHighlightColorChange={editorFunctions.setHighlightColor}
-  onZoomChange={editorFunctions.setZoomLevel}
-/>
+            editor={editor}
+            toolbarRef={toolbarRef}
+            showToast={setToastMessage}
+            onToggleSource={() => setShowSource(!showSource)}
+            onTogglePreview={() => setShowPreview(!showPreview)}
+            onFindOpen={() => setFindOpen(true)}
+            onFullscreenToggle={editorFunctions.toggleFullscreen}
+            onCommentAdd={() => setCommentModal({ open: true, selection: null })}
+            onEquationInsert={() => setEquationModalOpen(true)}
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            onTrackChangesToggle={() => setTrackChanges(!trackChanges)}
+            onPostToBlog={handlePostToBlog}
+            isFullscreen={isFullscreen}
+            sidebarOpen={sidebarOpen}
+            trackChanges={trackChanges}
+            onFileOpen={() => document.getElementById('file-open-input')?.click()}
+            onImageUpload={() => document.getElementById('file-image-input')?.click()}
+            onVideoUpload={() => document.getElementById('file-video-input')?.click()}
+            onSaveHtml={fileOperations.saveAsHtml}
+            onSaveWord={fileOperations.saveAsWord}
+            onSavePdf={fileOperations.saveAsPdf}
+            fontSize={fontSize}
+            fontFamily={fontFamily}
+            lineHeight={lineHeight}
+            textColor={textColor}
+            highlightColor={highlightColor}
+            zoomLevel={zoomLevel}
+            onFontSizeChange={editorFunctions.setFontSize}
+            onFontFamilyChange={editorFunctions.setFontFamily}
+            onLineHeightChange={editorFunctions.setLineHeight}
+            onTextColorChange={editorFunctions.setTextColor}
+            onHighlightColorChange={editorFunctions.setHighlightColor}
+            onZoomChange={editorFunctions.setZoomLevel}
+          />
 
           <div className="editor-content-wrapper">
             {/* {sidebarOpen && (
@@ -206,6 +226,7 @@ const handlePostToBlog = () => {
               onQuickAdd={editorFunctions.handleQuickAdd}
               onSourceToggle={() => setShowSource(!showSource)}
               onPostToBlog={handlePostToBlog}
+              isPosting={isPosting}
               zoomLevel={zoomLevel}
             />
           </div>

@@ -1,20 +1,21 @@
 import express from 'express';
 import authMiddleware from '../middleware/authMiddleware.js';
 import {
-  createBlog,
+  listBlogs,
   getUserBlogs,
+  createBlog,
   updateBlog,
-  deleteBlog
+  deleteBlog,
 } from '../controllers/blogController.js';
 
 const router = express.Router();
 
-router.use(authMiddleware);
-
-router.post('/', createBlog);
-router.get('/', getUserBlogs);
-router.put('/:id', updateBlog);
-router.delete('/:id', deleteBlog);
+router.get('/', listBlogs);
+router.get('/mine', authMiddleware, getUserBlogs);
+router.post('/', authMiddleware, createBlog);
+router.put('/:id', authMiddleware, updateBlog);
+router.delete('/:id', authMiddleware, deleteBlog);
 
 export default router;
+
 

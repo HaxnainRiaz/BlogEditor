@@ -21,7 +21,7 @@ const SignupPage = () => {
         });
     };
     
-    const handleFormSubmit = (e) => {
+    const handleFormSubmit = async (e) => {
         e.preventDefault();
         
         if (formData.password !== formData.confirmPassword) {
@@ -39,16 +39,27 @@ const SignupPage = () => {
             return;
         }
 
-        // Store user data
-        const userData = {
-            fullName: formData.fullName,
-            email: formData.email,
-            password: formData.password,
-        };
-        
-        localStorage.setItem('userData', JSON.stringify(userData));
-        toast.success('Account created successfully! Redirecting to login...');
-        setTimeout(() => navigate('/login'), 2000);
+        try {
+            const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:4025';
+            const res = await fetch(`${apiBase}/api/auth/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    username: formData.fullName,
+                    email: formData.email,
+                    password: formData.password
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data?.error || 'Signup failed');
+            }
+            toast.success('Account created successfully! Redirecting to login...');
+            setTimeout(() => navigate('/login'), 2000);
+        } catch (err) {
+            toast.error(err.message);
+        }
     };
 
     return (

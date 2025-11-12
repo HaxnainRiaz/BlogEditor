@@ -18,27 +18,31 @@ const LoginPage = () => {
     });
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    
-    const storedUserData = localStorage.getItem('userData');
-    
-    if (!storedUserData) {
-      toast.error('No account found. Please sign up first.');
-      return;
-    }
-
-    const userData = JSON.parse(storedUserData);
-    
-    if (formData.email === userData.email && formData.password === userData.password) {
+    try {
+      const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:4025';
+      const res = await fetch(`${apiBase}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || 'Login failed');
+      }
+      // Session is stored in httpOnly cookie by backend; nothing to store on client
       toast.success('Login successful! Redirecting...');
-      
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('currentUser', JSON.stringify(userData));
-      
-      setTimeout(() => navigate('/editor'), 2000);
-    } else {
-      toast.error('Invalid email or password!');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('auth:refresh'));
+      }
+      setTimeout(() => navigate('/editor'), 1000);
+    } catch (err) {
+      toast.error(err.message);
     }
   };
 

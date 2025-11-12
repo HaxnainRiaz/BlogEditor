@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
@@ -12,27 +12,80 @@ import PrivacyPage from './pages/PrivacyPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import './styles/website.css';
 
+// Simple session hook using cookie-based auth
+const useSession = () => {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    let active = true;
+    const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:4025';
+
+    const fetchSession = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${apiBase}/api/auth/me`, { credentials: 'include' });
+        if (!res.ok) {
+          if (!active) return;
+          setUser(null);
+          return;
+        }
+        const data = await res.json();
+        if (!active) return;
+        setUser(data.user);
+      } catch (error) {
+        console.error('Failed to fetch session', error);
+        if (active) {
+          setUser(null);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchSession();
+
+    const handleRefresh = () => {
+      if (!active) return;
+      fetchSession();
+    };
+
+    window.addEventListener('auth:refresh', handleRefresh);
+
+    return () => {
+      active = false;
+      window.removeEventListener('auth:refresh', handleRefresh);
+    };
+  }, []);
+  return { loading, user };
+};
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  return isLoggedIn ? children : <Navigate to="/login" />;
+  const { loading, user } = useSession();
+  if (loading) return null; // or a loader component
+  return user ? children : <Navigate to="/login" />;
 };
 
 // Public Route Component (redirect to editor if already logged in)
 const PublicRoute = ({ children }) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  return !isLoggedIn ? children : <Navigate to="/editor" />;
+  const { loading, user } = useSession();
+  if (loading) return null; // or a loader component
+  return !user ? children : <Navigate to="/editor" />;
 };
 
 function App() {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  const { loading, user } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('currentUser');
-    window.location.href = '/';
+  const handleLogout = async () => {
+    const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:4025';
+    try {
+      await fetch(`${apiBase}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+    } finally {
+      window.location.href = '/';
+    }
   };
 
   return (
@@ -52,12 +105,12 @@ function App() {
               <Link to="/about" className="nav-link" onClick={() => setMobileOpen(false)}>About</Link>
               <Link to="/blog" className="nav-link" onClick={() => setMobileOpen(false)}>Blog</Link>
               <Link to="/contact" className="nav-link" onClick={() => setMobileOpen(false)}>Contact</Link>
-              {isLoggedIn ? (
+              {user ? (
                 <>
                   <Link to="/editor" className="nav-link" onClick={() => setMobileOpen(false)}>Editor</Link>
                   <div className="nav-user-section">
                     <span className="nav-welcome">
-                      Welcome, {currentUser.fullName || 'User'}!
+                      Welcome, {user.username || user.email || 'User'}!
                     </span>
                     <button 
                       onClick={() => { setMobileOpen(false); handleLogout(); }}
