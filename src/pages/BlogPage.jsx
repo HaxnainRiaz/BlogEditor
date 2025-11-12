@@ -1,15 +1,34 @@
 // src/pages/BlogPage.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const BlogPage = () => {
+const BlogPage = ({ currentUser = null }) => {
   const [blogs, setBlogs] = useState([]);
   const [selectedBlog, setSelectedBlog] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:4025';
+
+  const currentUserId = useMemo(() => currentUser?.id || currentUser?._id || null, [currentUser]);
+
+  const getBlogAuthorId = (blog) =>
+    blog?.author?.id ||
+    blog?.author?._id ||
+    blog?.authorId ||
+    blog?.userId ||
+    blog?.user?._id ||
+    blog?.user?.id ||
+    null;
+
+  const isBlogOwner = useCallback(
+    (blog) => {
+      if (!blog || !currentUserId) return false;
+      return getBlogAuthorId(blog) === currentUserId;
+    },
+    [currentUserId]
+  );
 
   const fetchBlogs = useCallback(async () => {
     setLoading(true);
@@ -63,7 +82,24 @@ const BlogPage = () => {
     setSelectedBlog(null);
   };
 
-  const handleDeleteBlog = async (blogId) => {
+  const handleDeleteBlog = async (blog) => {
+    if (!blog) return;
+    if (!currentUserId) {
+      toast.error('You need to be logged in to delete a blog post.');
+      return;
+    }
+
+    if (!isBlogOwner(blog)) {
+      toast.error('You can only delete your own blog posts.');
+      return;
+    }
+
+    const blogId = blog.id || blog._id;
+    if (!blogId) {
+      toast.error('Unable to determine blog id.');
+      return;
+    }
+
     const confirmed = window.confirm('Are you sure you want to delete this blog post?');
     if (!confirmed) return;
 
@@ -116,12 +152,14 @@ const BlogPage = () => {
             />
             
             <div className="blog-actions">
-              <button 
-                className="delete-button"
-                onClick={() => handleDeleteBlog(selectedBlog.id || selectedBlog._id)}
-              >
-                Delete Blog
-              </button>
+              {isBlogOwner(selectedBlog) && (
+                <button 
+                  className="delete-button"
+                  onClick={() => handleDeleteBlog(selectedBlog)}
+                >
+                  Delete Blog
+                </button>
+              )}
             </div>
           </article>
         </div>
@@ -192,12 +230,14 @@ const BlogPage = () => {
                     >
                       Read More
                     </button>
-                    <button 
-                      className="delete-button-small"
-                      onClick={() => handleDeleteBlog(blog.id || blog._id)}
-                    >
-                      Delete
-                    </button>
+                    {isBlogOwner(blog) && (
+                      <button 
+                        className="delete-button-small"
+                        onClick={() => handleDeleteBlog(blog)}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               </article>

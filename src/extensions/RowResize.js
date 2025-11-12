@@ -72,12 +72,9 @@ export default function createRowResizePlugin() {
           const { state } = view;
           const table = state.doc.nodeAt(tablePos);
           if (!table) return false;
-          const rowNode = table.child(rowIndex);
-
           let startHeight = 0;
           // Determine current row height from first cell style if present
           const cellsDocPositions = mapRowCellsToDocPositions(tablePos, rowIndex, state);
-          const domAtPos = view.domAtPos.bind(view);
           if (cellsDocPositions.length) {
             const dom = view.nodeDOM(cellsDocPositions[0]);
             if (dom && dom instanceof HTMLElement) {
@@ -144,7 +141,6 @@ function buildRowHandles(state) {
         const row = node.child(r);
         // Attach a handle widget at the end of the first cell's content
         if (row.childCount > 0) {
-          const firstCell = row.child(0);
           const cellPos = rowPos + 1; // position of first cell
           const handle = document.createElement('div');
           handle.className = 'row-resize-handle';

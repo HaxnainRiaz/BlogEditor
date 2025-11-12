@@ -140,7 +140,6 @@ export const useAdvancedFeatures = ({
     }]);
 
     // Replace the text with a suggestion span
-    const currentSelection = editor.state.selection;
     editor.chain().focus().insertContent(
       `<span class="suggest bg-blue-100 border border-blue-300 px-1" data-suggestion-id="${id}">${suggestedText}</span>`
     ).run();

@@ -36,10 +36,10 @@ export const useFileOperations = ({ editor, setToast, currentFile, setCurrentFil
   const sanitizeHtml = (html) => {
     if (!html) return "";
     let out = html;
-    out = out.replace(/\sstyle=\"[^\"]*background[^\"]*\"/gi, (m) => {
+    out = out.replace(/\sstyle="[^"]*background[^"]*"/gi, (m) => {
       const cleaned = m
-        .replace(/background-color\s*:[^;\"]*;?/gi, "")
-        .replace(/background\s*:[^;\"]*;?/gi, "");
+        .replace(/background-color\s*:[^;"]*;?/gi, "")
+        .replace(/background\s*:[^;"]*;?/gi, "");
       return cleaned === ' style=""' ? "" : cleaned;
     });
     out = out.replace(/[\u200B\uFEFF]/g, "");
