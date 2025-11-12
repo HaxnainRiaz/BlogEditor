@@ -6,16 +6,6 @@ import { Decoration, DecorationSet } from 'prosemirror-view';
 
 export const rowResizePluginKey = new PluginKey('rowResize');
 
-function getAllCellsInRow(trNode) {
-  const cells = [];
-  trNode.forEach((cell, offset) => {
-    if (cell.type.name === 'tableCell' || cell.type.name === 'tableHeader') {
-      cells.push({ node: cell, offset });
-    }
-  });
-  return cells;
-}
-
 function mapRowCellsToDocPositions(tablePos, rowIndex, state) {
   // Compute positions of all cells in the row given the table position
   const table = state.doc.nodeAt(tablePos);

@@ -298,6 +298,7 @@ export const editorConfig = {
         class: 'rounded px-1 py-0.5',
       },
     }),
+    Underline,
     HorizontalRule.configure({
       HTMLAttributes: {
         class: 'border-t-2 border-gray-300 my-8',
@@ -363,11 +364,9 @@ export const editorConfig = {
     handlePaste: (view, event) => {
       // Enhanced paste handling for Word content
       const html = event.clipboardData?.getData('text/html');
-      const text = event.clipboardData?.getData('text/plain');
       
       if (html && html.includes('mso-')) {
         // Word content detected - use special handling
-        event.preventDefault();
         // Process Word HTML content
         const processedHtml = processWordPaste(html);
         view.dispatch(view.state.tr.insertText(processedHtml));

@@ -29,6 +29,9 @@ const SecondaryToolbar = ({
             <ZoomOut size={16} />
           </button>
           <span className="zoom-level">{zoomLevel}%</span>
+          <button className="zoom-btn" onClick={handleZoomReset} title="Reset Zoom">
+            100%
+          </button>
           <button className="zoom-btn" onClick={handleZoomIn} title="Zoom In">
             <ZoomIn size={16} />
           </button>

@@ -205,10 +205,10 @@ export default function EditorContentArea({
     if (!html) return "";
     let out = html;
     // Remove inline background styles
-    out = out.replace(/\sstyle=\"[^\"]*background[^\"]*\"/gi, (m) => {
+    out = out.replace(/\sstyle="[^"]*background[^"]*"/gi, (m) => {
       const cleaned = m
-        .replace(/background-color\s*:[^;\"]*;?/gi, "")
-        .replace(/background\s*:[^;\"]*;?/gi, "");
+        .replace(/background-color\s*:[^;"]*;?/gi, "")
+        .replace(/background\s*:[^;"]*;?/gi, "");
       return cleaned === ' style=""' ? "" : cleaned;
     });
     // Remove zero-width spaces
